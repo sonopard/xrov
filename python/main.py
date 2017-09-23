@@ -59,7 +59,7 @@ def rov_get_wheel_velocities(movedata: RovManualMove):
 
 def gb_rov_move(wheelvel: RovWheelVelocities):
     # different directions.. therefore very verbose. >.<
-    print("DC: FL: {:06:4f}".format(abs(wheelvel.FL) * 100 * PWM_DC_MUL))
+    print("DC: FL: {:06.4f}".format(abs(wheelvel.FL) * 100 * PWM_DC_MUL))
 
     gb.pwm_brushed(BOARD, FL, PWM_FREQ, abs(wheelvel.FL) * 100 * PWM_DC_MUL)
     if wheelvel.FL < 0:
