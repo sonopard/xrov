@@ -1,8 +1,9 @@
+import time
 import collections
 import gertbot as gb
 import xbox as xb
 
-USE_GB = False
+USE_GB = True
 
 ## hardware constants
 # gertbot board identifier
@@ -58,6 +59,7 @@ def rov_get_wheel_velocities(movedata: RovManualMove):
 
 def gb_rov_move(wheelvel: RovWheelVelocities):
     # different directions.. therefore very verbose. >.<
+    gb.pwm_brushed(BOARD, FL, PWM_FREQ, abs(wheelvel.FL) * 100 * PWM_DC_MUL)
     if wheelvel.FL < 0:
         gb.move_brushed(BOARD, FL, 1)
     elif wheelvel.FL > 0:
@@ -65,6 +67,7 @@ def gb_rov_move(wheelvel: RovWheelVelocities):
     else:
         gb.move_brushed(BOARD, FL, 0)
 
+    gb.pwm_brushed(BOARD, FR, PWM_FREQ, abs(wheelvel.FR) * 100 * PWM_DC_MUL)
     if wheelvel.FR < 0:
         gb.move_brushed(BOARD, FR, 2)
     elif wheelvel.FR > 0:
@@ -72,6 +75,7 @@ def gb_rov_move(wheelvel: RovWheelVelocities):
     else:
         gb.move_brushed(BOARD, FR, 0)
 
+    gb.pwm_brushed(BOARD, RL, PWM_FREQ, abs(wheelvel.RL) * 100 * PWM_DC_MUL)
     if wheelvel.RL < 0:
         gb.move_brushed(BOARD, RL, 1)
     elif wheelvel.RL > 0:
@@ -79,17 +83,13 @@ def gb_rov_move(wheelvel: RovWheelVelocities):
     else:
         gb.move_brushed(BOARD, RL, 0)
 
+    gb.pwm_brushed(BOARD, RR, PWM_FREQ, abs(wheelvel.RR) * 100 * PWM_DC_MUL)
     if wheelvel.RR < 0:
         gb.move_brushed(BOARD, RR, 2)
     elif wheelvel.RR > 0:
         gb.move_brushed(BOARD, RR, 1)
     else:
         gb.move_brushed(BOARD, RR, 0)
-
-    gb.pwm_brushed(BOARD, FL, PWM_FREQ, abs(wheelvel.FL) * 100 * PWM_DC_MUL)
-    gb.pwm_brushed(BOARD, FR, PWM_FREQ, abs(wheelvel.FR) * 100 * PWM_DC_MUL)
-    gb.pwm_brushed(BOARD, RL, PWM_FREQ, abs(wheelvel.RL) * 100 * PWM_DC_MUL)
-    gb.pwm_brushed(BOARD, RR, PWM_FREQ, abs(wheelvel.RR) * 100 * PWM_DC_MUL)
 
 
 def gb_init():
@@ -101,6 +101,7 @@ def gb_init():
 
 
 while run:
+    time.sleep(1)
     if USE_GB:
         gb_init()
     wheelvels = rov_get_wheel_velocities(joystick_read())
