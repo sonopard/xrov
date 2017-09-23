@@ -59,6 +59,8 @@ def rov_get_wheel_velocities(movedata: RovManualMove):
 
 def gb_rov_move(wheelvel: RovWheelVelocities):
     # different directions.. therefore very verbose. >.<
+    print("DC: FL: {:06:4f}".format(abs(wheelvel.FL) * 100 * PWM_DC_MUL))
+
     gb.pwm_brushed(BOARD, FL, PWM_FREQ, abs(wheelvel.FL) * 100 * PWM_DC_MUL)
     if wheelvel.FL < 0:
         gb.move_brushed(BOARD, FL, 1)
@@ -105,4 +107,5 @@ if USE_GB:
 while run:
     wheelvels = rov_get_wheel_velocities(joystick_read())
     if USE_GB:
+        time.sleep(0.1) # meh
         gb_rov_move(wheelvels)
