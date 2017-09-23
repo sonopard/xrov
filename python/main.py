@@ -99,11 +99,10 @@ def gb_init():
     gb.set_mode(BOARD, RL, gb.MODE_BRUSH)
     gb.set_mode(BOARD, RR, gb.MODE_BRUSH)
 
+if USE_GB:
+    gb_init()
 
 while run:
-    time.sleep(1)
-    if USE_GB:
-        gb_init()
     wheelvels = rov_get_wheel_velocities(joystick_read())
     if USE_GB:
         gb_rov_move(wheelvels)
