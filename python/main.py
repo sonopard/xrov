@@ -1,3 +1,5 @@
+import vectormath
+import math
 import time
 import collections
 import gertbot as gb
@@ -22,6 +24,9 @@ WHEEL_DIAMETER = 6
 TREAD_LENGTH = 19
 WHEELBASE_LENGTH = 18
 
+DZ_HARD = 0.3
+DZ_SCALE = 0.1
+
 joystick = xb.Joystick()
 joystick_connected = False
 run = True
@@ -39,18 +44,29 @@ def joystick_read():
         joystick_connected = joystick.connected()
         print("Joystick state changed: {}\n".format(joystick_connected))
     if joystick_connected:
-        return RovManualMove(joystick.rightX(), joystick.rightY(), -joystick.leftX() / 12)
+        xy = vectormath.Vector2(joystick.rightX(0),joystick.rightY(0))
+        rot_r = joystick.rightTrigger()
+        rot_l = joystick.leftTrigger()
+        rot = rot_r - rot_l
+        if xy.length < DZ_HARD:
+            xy.x = 0
+            xy.y = 0
+        else:
+            xy.length = (xy.length - DZ_SCALE) / (1 - DZ_SCALE)
+        if xy.length > 1:
+            xy = xy.normalize()
+        print("PS: len: {:06.4f} x: {:06.4f} y: {:06.4f} rot: {:06.4f} ".format(xy.length, xy.x, xy.y, rot))
+        return RovManualMove(xy.x, xy.y, rot)
     else:
         return RovManualMove(0, 0, 0)
-
 
 def rov_get_wheel_velocities(movedata: RovManualMove):
     #  https://github.com/neobotix/neo_driver/blob/indigo_dev/neo_platformctrl_mecanum/common/src/Mecanum4WKinematics.cpp
     velocities = RovWheelVelocities(
-        (2 / WHEEL_DIAMETER * (movedata.y + movedata.x - (TREAD_LENGTH + WHEELBASE_LENGTH) / 2 * movedata.phi)),
-        (2 / WHEEL_DIAMETER * (movedata.y - movedata.x + (TREAD_LENGTH + WHEELBASE_LENGTH) / 2 * movedata.phi)),
-        (2 / WHEEL_DIAMETER * (movedata.y - movedata.x - (TREAD_LENGTH + WHEELBASE_LENGTH) / 2 * movedata.phi)),
-        (2 / WHEEL_DIAMETER * (movedata.y + movedata.x + (TREAD_LENGTH + WHEELBASE_LENGTH) / 2 * movedata.phi)))
+        (2 / WHEEL_DIAMETER * (movedata.y + movedata.x - (TREAD_LENGTH + WHEELBASE_LENGTH) / 2 * (movedata.phi/12))),
+        (2 / WHEEL_DIAMETER * (movedata.y - movedata.x + (TREAD_LENGTH + WHEELBASE_LENGTH) / 2 * (movedata.phi/12))),
+        (2 / WHEEL_DIAMETER * (movedata.y - movedata.x - (TREAD_LENGTH + WHEELBASE_LENGTH) / 2 * (movedata.phi/12))),
+        (2 / WHEEL_DIAMETER * (movedata.y + movedata.x + (TREAD_LENGTH + WHEELBASE_LENGTH) / 2 * (movedata.phi/12))))
     print(
         "Vel: FL: {:06.4f} FR: {:06.4f} RL: {:06.4f} RR: {:06.4f}".format(velocities.FL, velocities.FR, velocities.RL,
                                                                             velocities.RR))
@@ -58,6 +74,7 @@ def rov_get_wheel_velocities(movedata: RovManualMove):
 
 
 def gb_rov_move(wheelvel: RovWheelVelocities):
+    gb.read_error_status(BOARD)
     # different directions.. therefore very verbose. >.<
     gb.pwm_brushed(BOARD, FL, PWM_FREQ, abs(wheelvel.FL) * 100 * PWM_DC_MUL)
     if wheelvel.FL < 0:
@@ -105,5 +122,4 @@ if USE_GB:
 while run:
     wheelvels = rov_get_wheel_velocities(joystick_read())
     if USE_GB:
-        time.sleep(0.1) # meh
         gb_rov_move(wheelvels)
